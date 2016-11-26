@@ -1,10 +1,10 @@
 * ob-javascript
 
-- support requiring npm modules from `node_modules`
+- support requiring npm modules from =node_modules=
 - support session as well as one shoot evaluation
 - wait for promises to resolve
-- no need to `return`
-- avoid using `let` or `const`
+- no need to =return=
+- avoid using =let= or =const=
 
 ** setup
 
@@ -30,11 +30,11 @@ initialization will enable the mode.
 *** no return needed
 
 : #+BEGIN_SRC javascript
-: "last expression will be printed"
+: new Date
 : #+END_SRC
 : 
 : #+RESULTS:
-: : last expression will be printed
+: : 2016-11-26T05:23:47.867Z
 
 *** promise support
 
@@ -53,7 +53,7 @@ resolution, the default timeout is 5 seconds
 
 *** file
 
-if the code block yields buffer or stream, and `:file` is specified,
+if the code block yields buffer or stream, and =:file= is specified,
 the result will be written to disk
 
 : #+BEGIN_SRC javascript :file canvas.png
@@ -61,7 +61,6 @@ the result will be written to disk
 : canvas = new Canvas(100, 100)
 : ctx = canvas.getContext('2d')
 : 
-: ctx.beginPath()
 : ctx.arc(50, 50, 50, -Math.PI * 0.5, Math.PI, false)
 : ctx.fillStyle = '#0ff'
 : ctx.fill()
