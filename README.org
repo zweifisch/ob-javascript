@@ -1,0 +1,74 @@
+* ob-javascript
+
+- support requiring npm modules from `node_modules`
+- support session as well as one shoot evaluation
+- wait for promises to resolve
+- no need to `return`
+- avoid using `let` or `const`
+
+** setup
+
+To use =ob-javascript= in an =org-babel= source block, the javascript language
+must be enabled in the custom =org-babel-load-languages=
+alist. Alternatively, running the following snippet during
+initialization will enable the mode.
+
+#+BEGIN_SRC emacs-lisp
+(org-babel-do-load-languages
+ 'org-babel-load-languages
+ '((emacs-lisp . t)
+   (javascript . t)))
+#+END_SRC
+
+** supported header arguments
+
+- session
+- file
+
+** examples
+
+*** no return needed
+
+: #+BEGIN_SRC javascript
+: "last expression will be printed"
+: #+END_SRC
+: 
+: #+RESULTS:
+: : last expression will be printed
+
+*** promise support
+
+if the code block yields a promise, it will be inspected after
+resolution, the default timeout is 5 seconds
+
+: #+BEGIN_SRC javascript
+: fetch = require('node-fetch')
+: 
+: fetch('https://api.github.com/repos/zweifisch/ob-coffee/languages')
+:   .then(res => res.json())
+: #+END_SRC
+: 
+: #+RESULTS:
+: : { 'Emacs Lisp': 4069, JavaScript: 184 }
+
+*** file
+
+if the code block yields buffer or stream, and `:file` is specified,
+the result will be written to disk
+
+: #+BEGIN_SRC javascript :file canvas.png
+: Canvas = require('canvas')
+: canvas = new Canvas(100, 100)
+: ctx = canvas.getContext('2d')
+: 
+: ctx.beginPath()
+: ctx.arc(50, 50, 50, -Math.PI * 0.5, Math.PI, false)
+: ctx.fillStyle = '#0ff'
+: ctx.fill()
+: 
+: canvas.toBuffer()
+: #+END_SRC
+: 
+: #+RESULTS:
+[[file:canvas.png]]
+
