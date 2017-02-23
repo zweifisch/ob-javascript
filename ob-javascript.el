@@ -29,7 +29,8 @@
 (defun org-babel-execute:javascript (body params)
   (let ((session (or (cdr (assoc :session params)) "default"))
         (result-type (cdr (assoc :result-type params)))
-        (file (cdr (assoc :file params))))
+        (file (cdr (assoc :file params)))
+        (body (if (assoc :babel params) (ob-javascript--babel body) body)))
     (if (string= "none" session)
         (ob-javascript--eval body file)
       (ob-javascript--eval-with-session session body file))))
@@ -37,6 +38,11 @@
 (defun ob-javascript--output (result file)
   (unless file result))
 
+(defun ob-javascript--babel (source)
+  (with-temp-buffer
+    (insert source)
+    (call-process-region (point-min) (point-max) "babel" t t nil "--filename" "./whereami")
+    (buffer-string)))
 
 (defun ob-javascript--eval (body file)
   (let ((tmp-source (org-babel-temp-file "javascript-"))
