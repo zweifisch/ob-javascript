@@ -77,11 +77,11 @@
       (buffer-string))))
 
 (defun ob-javascript--node-path ()
-  (let ((node-path (or (getenv "NODE_PATH") "")))
-    (format "%s:%snode_modules"
-            node-path
-            (file-name-directory
-             (buffer-file-name)))))
+  (let ((node-path (or (getenv "NODE_PATH") ""))
+        (node-modules (locate-dominating-file (buffer-file-name) "node_modules")))
+    (if node-modules
+        (format "%s:%snode_modules" node-path (file-truename node-modules))
+      node-path)))
 
 (defun ob-javascript--ensure-session (session)
   (let ((name (format "*javascript-%s*" session))
