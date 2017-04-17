@@ -30,10 +30,12 @@
   (let ((session (or (cdr (assoc :session params)) "default"))
         (result-type (cdr (assoc :result-type params)))
         (file (cdr (assoc :file params)))
-        (body (if (assoc :babel params) (ob-javascript--babel body) body)))
-    (if (string= "none" session)
-        (ob-javascript--eval body file)
-      (ob-javascript--eval-with-session session body file))))
+        (body (if (assoc :babel params) (ob-javascript--babel body) (list 't body))))
+    (if (car body)
+        (if (string= "none" session)
+            (ob-javascript--eval (cadr body) file)
+          (ob-javascript--eval-with-session session (cadr body) file))
+      (cadr body))))
 
 (defun ob-javascript--output (result file)
   (unless file result))
@@ -41,8 +43,10 @@
 (defun ob-javascript--babel (source)
   (with-temp-buffer
     (insert source)
-    (call-process-region (point-min) (point-max) "babel" t t nil "--filename" "./whereami")
-    (buffer-string)))
+    (list
+     (eq 0
+         (call-process-region (point-min) (point-max) "babel" t t nil "--filename" "./whereami"))
+     (buffer-string))))
 
 (defun ob-javascript--eval (body file)
   (let ((tmp-source (org-babel-temp-file "javascript-"))

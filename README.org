@@ -2,6 +2,7 @@
 
 - support requiring npm modules from =node_modules=
 - support session as well as one shoot evaluation
+- babel support
 - wait for promises to resolve
 - no need to =return=
 - avoid using =let= or =const=
