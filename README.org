@@ -1,25 +1,12 @@
 * ob-javascript
 
+- support node and headless chrome
 - support requiring npm modules from =node_modules=
 - support session as well as one shoot evaluation
 - babel support
 - wait for promises to resolve
 - no need to =return=
 - avoid using =let= or =const=
-
-** setup
-
-To use =ob-javascript= in an =org-babel= source block, the javascript language
-must be enabled in the custom =org-babel-load-languages=
-alist. Alternatively, running the following snippet during
-initialization will enable the mode.
-
-#+BEGIN_SRC emacs-lisp
-(org-babel-do-load-languages
- 'org-babel-load-languages
- '((emacs-lisp . t)
-   (javascript . t)))
-#+END_SRC
 
 ** supported header arguments
 
@@ -89,3 +76,11 @@ the result will be written to disk
 : #+RESULTS:
 [[file:canvas.png]]
 
+*** headless chrome
+
+: #+BEGIN_SRC javascript :session http://gnu.org
+: document.querySelector('title').text
+: #+END_SRC
+: 
+: #+RESULTS:
+: : The GNU Operating System and the Free Software Movement

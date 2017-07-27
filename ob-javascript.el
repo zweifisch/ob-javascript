@@ -29,12 +29,22 @@
 
 ;;; Code:
 (require 'ob)
+(require 'json)
 
 (defvar ob-javascript-process-output nil)
 
 (defvar ob-javascript-eoe "\u2029")
 (defvar ob-javascript-eoe-js "\\u2029")
 (defvar ob-javascript-timeout 5)
+
+(defgroup ob-javascript nil
+  "org-babel functions for javascript evaluation"
+  :group 'org)
+
+(defcustom ob-javascript:browser-binary "chromium-browser"
+  "browser binary"
+  :group 'ob-javascript
+  :type 'string)
 
 (defconst ob-javascript-path-to-lib
   (file-name-directory (or load-file-name buffer-file-name)))
@@ -47,7 +57,14 @@
     (if (car body)
         (if (string= "none" session)
             (ob-javascript--eval (cadr body) file)
-          (ob-javascript--eval-with-session session (cadr body) file))
+          (if (or
+               (string-prefix-p "http://" session)
+               (string-prefix-p "https://" session))
+              (progn
+                (ob-javascript--ensure-browser-session session)
+                (ob-javascript--get-result-value
+                 (ob-javascript--eval-in-browser-repl session (cadr body))))
+            (ob-javascript--eval-with-session session (cadr body) file)))
       (cadr body))))
 
 (defun ob-javascript--output (result file)
@@ -117,8 +134,8 @@
 (defun ob-javascript--process-filter (process output)
   (setq ob-javascript-process-output (concat ob-javascript-process-output output)))
 
-(defun ob-javascript--wait (timeout)
-  (while (and (not (string-match-p ob-javascript-eoe ob-javascript-process-output))
+(defun ob-javascript--wait (timeout what)
+  (while (and (not (string-match-p what ob-javascript-process-output))
               (> timeout 0))
     (setq timeout (- timeout 0.2))
     (sit-for 0.2)))
@@ -128,9 +145,37 @@
     (setq ob-javascript-process-output nil)
     (process-send-string name (format "%s\n" body))
     (accept-process-output (get-process name) nil nil 1)
-    (ob-javascript--wait ob-javascript-timeout)
+    (ob-javascript--wait ob-javascript-timeout ob-javascript-eoe)
     (message
      (replace-regexp-in-string ob-javascript-eoe "" ob-javascript-process-output))))
+
+(defun ob-javascript--ensure-browser-session (session)
+  (let ((name (format "*ob-javascript-%s*" session)))
+    (unless (and (get-process name)
+                 (process-live-p (get-process name)))
+      (let ((process (with-current-buffer (get-buffer-create name)
+                       (start-process name name
+                                      ob-javascript:browser-binary "--headless" "--disable-gpu" "--repl" session))))
+        (sit-for 1)
+        (set-process-filter process 'ob-javascript--process-filter)
+        (ob-javascript--wait ob-javascript-timeout "Type a Javascript expression to evaluate or \"quit\" to exit.")))))
+
+(defun ob-javascript--eval-in-browser-repl (session body)
+  (let ((name (format "*ob-javascript-%s*" session)))
+    (setq ob-javascript-process-output "")
+    (process-send-string name (format "%s\n\"%s\"\n" body ob-javascript-eoe))
+    (accept-process-output (get-process name) nil nil 1)
+    (ob-javascript--wait ob-javascript-timeout ob-javascript-eoe)
+    (replace-regexp-in-string
+     "^>>> " ""
+     (replace-regexp-in-string
+      (format "^.*\"%s\".*$" ob-javascript-eoe) "" ob-javascript-process-output))))
+
+(defun ob-javascript--get-result-value (result)
+  (let* ((result (assoc-default 'result (json-read-from-string result)))
+         (value (assoc 'value result)))
+    (if value (cdr value)
+      (assoc-default 'description result))))
 
 (provide 'ob-javascript)
 ;;; ob-javascript.el ends here
